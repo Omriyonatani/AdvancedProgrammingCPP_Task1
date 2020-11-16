@@ -10,14 +10,14 @@ using namespace std;
 class Editor{
     // private:
     Document Doc;
-    int line;
 
     public:
-    Editor():Doc(), line(0){}
+    Editor():Doc(){}
 
-    Editor(Document Docum):Doc(Docum), line(Docum.getFileSize()){}
+    Editor(Document Docum):Doc(Docum){}
 
     ~Editor(){};
 
     void loop();
+
 };

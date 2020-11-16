@@ -10,31 +10,31 @@ class Document{
     // the file is vector of strings, every row is a string. the cols is the vector index'es.
     // private:
     vector<string> file;
-    string temp;
-    int filePointer;
 
     public:
+    int lineNumber;
     // Constructor
-    Document():file(),filePointer(1){}
+    Document():file(), lineNumber(1){}
 
     // Constructor from ifstream 
-    Document(std::ifstream& fileStream):file(),filePointer(1){
-        while(getline(fileStream,temp));
-        file.push_back(temp);
+    Document(std::ifstream &fileStream):file(),lineNumber(1){
+        string tempDoc;
+        while(getline(fileStream,tempDoc)){
+            file.push_back(tempDoc);
+        }
     }
 
     ~Document(){}
 
     int getFileSize();
     string getLine(int lineNum);
-    int currentLine();
-    void changeCurrentLine(int cl);
-    int findLine(string word);
-    void addLine(int plus);
-    void goTo(int lineToGo);
+    int findLine(int begin, int end, string &word);
+    void addLine(int plus,string &Add);
     void deleteLine(int line);
-    void deleteThisLine();
-    void changeWord(string old_word,int old_length, string new_word);
-    void addCurrentLine();
-    void insertHere(string s);
+    void insertHere();
+    void changeWord(string &old_word, int old_length, string &new_word);
+    void goToLine(int goTo);
+    void goToLineMinus(int goTo);
+    void goToLineMinusFORI(int goTo);
+    void joinNext();
 };

@@ -1,10 +1,4 @@
 #include "Editor.h"
-#include "Document.h"
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-
 
 using namespace std;
 
@@ -15,106 +9,119 @@ bool is_number(const string& s){
 }
 
 void Editor::loop(){
-    while(true){
-        string s=" ";
-        getline(cin,s);
+    string s;
+    //const char* pointer;
 
-        // take the first and the last letters for check the cases
-        const char* fl=&s[0];
-        const char* ll=&s[s.length()-1];
+    while(true){
+        getline(cin,s);
 
         // case Number,Int,Digit.
         if(is_number(s)){
-            int Digit1=atoi((const char*) fl);
-            int Digit2=atoi((const char*) ll);
-            int Digit3=Digit1*10+Digit2;
-            if(Digit2==0){
-                Digit3=Digit3/10;
+            int Digit = stoi(s);
+            if(Digit<1 || Digit > Doc.getFileSize()+1){
+                cout<<"?"<<endl;
+                continue;
             }
-            if(Digit3>0 && Digit3<Doc.getFileSize()){
-                Doc.changeCurrentLine(Digit3);
-            }
+            Doc.lineNumber=Digit;
+            cout<< Doc.getLine(Doc.lineNumber)<<endl;
         }
+
         // +Num case
-        else if(fl == "+"){
-            const char* sc = s.c_str();
-            int plus = atoi(sc);
-            Doc.addLine(plus);
+        else if(s.at(0) == '+' && is_number(s.substr(1))){
+            string s1=s.substr(1);
+            int DigitPlus = stoi(s1);
+            if((Doc.lineNumber + DigitPlus) > Doc.getFileSize()+1){
+                cout<<"?"<<endl;
+            }else{
+                Doc.goToLine(DigitPlus);
+                cout<< Doc.getLine(Doc.lineNumber)<<endl;
+            }
         }
 
         // -Num case
-        else if(fl == "-"){
-            const char* sc = s.c_str();
-            int minus = atoi(sc);
-            Doc.addLine(minus*(-1));
+        else if(s.at(0) == '-' && is_number(s.substr(1))){
+            string s1=s.substr(1);
+            int DigitMinus = stoi(s1);
+            if((Doc.lineNumber - DigitMinus) <=0){
+                cout<<"?"<<endl;
+            }else{
+                Doc.goToLineMinus(DigitMinus);      
+                cout<< Doc.getLine(Doc.lineNumber)<<endl;      
+            }
         }
+
         // case $
         else if(s == "$"){
-            Doc.changeCurrentLine(Doc.getFileSize());
+            Doc.lineNumber = Doc.getFileSize()+1;
+            cout<< Doc.getLine(Doc.lineNumber)<<endl;   
         }
         // case a
         else if(s == "a"){
-            while(true){
-                Doc.insertHere(s);
-            }
+            Doc.insertHere();
         }
         // case i
         else if(s == "i"){
-            Doc.addLine(-1);
-            while(true){
-                Doc.insertHere(s);
-            }
+            Doc.goToLineMinusFORI(1);           // go 1 reverse
+            Doc.insertHere();
         }
         // case c
         else if(s == "c"){
-            Doc.deleteThisLine();
-            while(true){
-                Doc.insertHere(s);
-            }
+            Doc.deleteLine(Doc.lineNumber);
+            Doc.lineNumber--;
+            Doc.insertHere();
         }
         // case d
         else if(s == "d"){
-            Doc.deleteThisLine();
+            Doc.deleteLine(Doc.lineNumber);
         }
         // case j
         else if(s=="j"){
-            Doc.addCurrentLine();
+            if(Doc.lineNumber<=Doc.getFileSize()){
+                Doc.joinNext();
+            }else{
+                cout<<"?"<<endl;
+            }
         }
         // case s/old/new/
-        else if(fl == "s" && ll == "/"){
-            string temp = s.substr(2,s.length()-2);   // temp = s, without "s/" and the last "/"
-            int checkIndex= temp.find("/"); // checkIndex is the index of the middle "/"
-            string old_word = temp.substr(0,checkIndex); // cut the old word
-            string new_word = temp.substr((checkIndex,temp.length()-1)); // cut the new word
-            this->Doc.changeWord(old_word,old_word.length(),new_word);
+        else if(s.at(0) == 's' && s.at(1) == '/' && s.at(s.length()-1) == '/'){
+            string temp = s.substr(2,s.length()-3);                                      // temp = s, without "s/" and the last "/"- only "old/new"
+            int checkIndex= temp.find("/");                                              // checkIndex is the index of the middle "/"
+            string old_word = temp.substr(0,checkIndex);                                 // cut the old word
+            string new_word = temp.substr((checkIndex+1));                                // cut the new word
+            Doc.changeWord(old_word,old_word.length(),new_word);
         }
         // case /text/
-        else if(fl == "/" && ll == "/"){
-            string s2=s.substr(1,s.length()-1); // s2 = the word that i need to searc
-            int newFP = this->Doc.findLine(s2);
-            this->Doc.changeCurrentLine(newFP);
+        else if(s.at(0) == '/' && s.at(s.length()-1) == '/'){
+            string s2=s.substr(1,s.length()-2);                                         // s2 = the word that i need to search
+            int newFP = Doc.findLine(Doc.lineNumber,Doc.getFileSize(),s2);            // new FilePointer (the index.)
+            if(newFP != -1){                                                            // if this word exist, if the "findLine" method didnt found the word- return -1 ! 
+                Doc.lineNumber = newFP;                                                 // change to there. 
+                cout<< Doc.lineNumber <<endl;
+            }
+            cout<< Doc.getLine(Doc.lineNumber)<<endl;
         }
         // case w file
-        else if(fl == "w"){
-            // save the file name
-            string fileName=s.substr(1,s.length()-1);
-            // new ofstream
-            std::ofstream out(fileName);
-            if(!out){ // check Err, file couldnt be open
+        else if(s.at(0) == 'w' && s.at(1)== ' '){
+            string fileName=s.substr(2);                                    // save the file name
+            std::ofstream out(fileName);                                    // new ofstream
+            if(!out){                                                       // check Err, file couldnt be open
                 cerr << "Error: the file could not be open" << endl;
                 exit(1);
             }
-            for(int i=0; i< Doc.getFileSize(); i++){
+            for(int i=1; i< Doc.getFileSize()+2; i++){
                 out<<Doc.getLine(i)<<'\n';
             }
-            // close the file.
-            out.close();
+            out.close();                                                    // close the file.
         }
+
         // case q
-        else if(s=="q") {
+        else if(s=="q"){
             return;
-        }else{
-            printf("?");
+        }
+        else{
+            if(s!="\n"){
+                cout<<"?"<<endl;
+            }
         }
     }
 }
